@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package db;
+package util;
 
 import com.mysql.jdbc.Connection;
 import java.sql.DriverManager;
@@ -15,30 +15,31 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import util.ConfigReader;
-import util.Log;
+import model.Mutation;
 
 /**
  *
  * @author Dirga
  */
-public class DbAdapter {
+public class Connect {
     
     Connection cn = null;
     Statement st = null;
     ResultSet hasilResultSet;
     SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy // HH-mm-ss");
     
-    public void connectionDB() {
+    public static String GET_MUTATION = "SELECT IDX FROM BANKMUTASI WHERE KODEBANK = ''{0}'' AND KETERANGAN = ''{1}'' AND NOMINAL = {2,number,#.#} AND DBKR = ''{3}''  AND SALDO = {4,number,#.#} AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()";
+    public static String GET_DATA = "SELECT KETERANGAN,NOMINAL,DBKR,SALDO FROM BANKMUTASI WHERE KODEBANK='QRIS' AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()";
+    public static String GET_MAP_INSERTED = "SELECT KETERANGAN,NOMINAL,DBKR,SALDO FROM BANKMUTASI WHERE KODEBANK = 'QRIS' AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()";
+    public static String INSERT_QUERY = "INSERT INTO BANKMUTASI (KODEBANK, TANGGAL, KETERANGAN, NOMINAL, DBKR, SALDO, TGLSYS, WAKTUSYS, CATATAN1, CATATAN2) VALUES (''{0}'',CURDATE(),''{1}'',{2,number,#.#},''{3}'',{4},CURDATE(),CURTIME(),''{5}'',''{6}'')";
+    
+    public void ConnectDB() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://" + ConfigReader.GetDbHost() + ":" + ConfigReader.GetDbPort() + "/" + ConfigReader.GetDbName();
-            String user = ConfigReader.GetDbUser();
-            String password = ConfigReader.GetDbPass();
-            cn = (Connection) DriverManager.getConnection(url, user, password);
+            cn = (Connection) DriverManager.getConnection(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}", Conf.GetDbHost(), Conf.GetDbPort(), Conf.GetDbName()), Conf.GetDbUser(), Conf.GetDbPass());
             st = cn.createStatement();
         } catch (ClassNotFoundException | SQLException e) {
-            Log.Logger("[ERROR]", e.getMessage());
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-38 ", e.getMessage());
         }
     }
     
@@ -49,22 +50,15 @@ public class DbAdapter {
     public Boolean GetMutation(Mutation mutation) {
        ResultSet results;
         try {
-            results = st.executeQuery(MessageFormat.format(
-                    "SELECT * FROM BANKMUTASI "
-                            + "WHERE KODEBANK = ''{4}'' "
-                            + "AND KETERANGAN = ''{0}'' "
-                            + "AND NOMINAL = {1,number,#.#} "
-                            + "AND DBKR = ''{2}'' "
-                            + "AND SALDO = {3,number,#.#} "
-                            + "AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()"
+            results = st.executeQuery(MessageFormat.format(GET_MUTATION
+                    ,"QRIS"
                     ,mutation.getKeterangan()
                     ,Double.parseDouble(mutation.getNominal())
                     ,mutation.getDbkr()
-                    ,Double.parseDouble(mutation.getSaldo())
-                    ,"QRIS"));
+                    ,Double.parseDouble(mutation.getSaldo())));
             return results.next();
         } catch (SQLException e) {
-            Log.Logger("[ERROR59]", e.getMessage());
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-58 ", e.getMessage());
             return false;
         }
     }
@@ -76,14 +70,8 @@ public class DbAdapter {
         ResultSet results;
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://" + ConfigReader.GetDbHost() + ":" + ConfigReader.GetDbPort() + "/" + ConfigReader.GetDbName();
-            String user = ConfigReader.GetDbUser();
-            String password = ConfigReader.GetDbPass();
-            try (Connection con = (Connection) DriverManager.getConnection(url, user, password); Statement stmt = con.createStatement()) {
-                results = stmt.executeQuery(
-                        "SELECT KETERANGAN,NOMINAL,DBKR,SALDO FROM BANKMUTASI "
-                                + "WHERE KODEBANK='QRIS' "
-                                + "AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()");
+            try (Connection con = (Connection) DriverManager.getConnection(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}", Conf.GetDbHost(), Conf.GetDbPort(), Conf.GetDbName()), Conf.GetDbUser(), Conf.GetDbPass()); Statement stmt = con.createStatement()) {
+                results = stmt.executeQuery(GET_DATA);
                 if (results != null) {
                     while (results.next()) {
                     }
@@ -93,7 +81,7 @@ public class DbAdapter {
                 }
             }
         } catch (ClassNotFoundException | SQLException e) {
-            System.out.println("[ERROR] " + Log.GetTime() + " : " + e);
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-82 ", e.getMessage());
         }
         return null;
     }
@@ -106,11 +94,8 @@ public class DbAdapter {
         Map<String, String> res = new HashMap();
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://" + ConfigReader.GetDbHost() + ":" + ConfigReader.GetDbPort() + "/" + ConfigReader.GetDbName();
-            String user = ConfigReader.GetDbUser();
-            String password = ConfigReader.GetDbPass();
-            try (Connection con = (Connection) DriverManager.getConnection(url, user, password); Statement stmt = con.createStatement()) {
-                results = stmt.executeQuery("SELECT KETERANGAN,NOMINAL,DBKR,SALDO FROM BANKMUTASI WHERE KODEBANK = 'QRIS' AND TANGGAL BETWEEN (DATE_SUB(CURDATE(), INTERVAL 3 DAY)) AND CURDATE()");
+            try (Connection con = (Connection) DriverManager.getConnection(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}", Conf.GetDbHost(), Conf.GetDbPort(), Conf.GetDbName()), Conf.GetDbUser(), Conf.GetDbPass()); Statement stmt = con.createStatement()) {
+                results = stmt.executeQuery(GET_MAP_INSERTED);
                 if (results != null) {
                     while (results.next()) {
                         res.put(MessageFormat.format("{0}:{1}:{2}:{3}",
@@ -125,7 +110,7 @@ public class DbAdapter {
                 }
             }
         } catch (ClassNotFoundException | SQLException e) {
-            Log.Logger("[ERROR]", e.getMessage());
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-133 ", e.getMessage());
         }
         return res;
     }
@@ -135,16 +120,14 @@ public class DbAdapter {
      * @return 
      */
     public String InsertMutation(List<Mutation> mutations) {
-        connectionDB();
-        String error = "Error";
+        ConnectDB();
+        String error = "Success";
         try {
             for (Mutation mutation : mutations) {
                 if (!GetMutation(mutation)) {
                     Mutation mut = mutation;                    
-                    if (GetData() == null) {
-                         st.execute(MessageFormat.format(
-                                 "INSERT INTO BANKMUTASI (KODEBANK, TANGGAL, KETERANGAN, NOMINAL, DBKR, SALDO, TGLSYS, WAKTUSYS, CATATAN1, CATATAN2) "
-                                         + "VALUES (''{0}'',CURDATE(),''{1}'',{2,number,#.#},''{3}'',{4},CURDATE(),CURTIME(),''{5}'',''{6}'')"
+//                    if (GetData() == null) {
+                         st.execute(MessageFormat.format(INSERT_QUERY
                                  ,mut.getKodebank()
                                  ,mut.getKeterangan()
                                  ,Double.parseDouble(mut.getNominal())
@@ -152,13 +135,13 @@ public class DbAdapter {
                                  ,mut.getSaldo()
                                  ,mut.getKeterangan()
                                  ,mut.getKeterangan()));
-                         error = "Success";
-                         Log.Logger("[SUCCESS]", "Data inserted...");
-                    }
+                         Tool.Logger("[INFO]" + Connect.class.getName() , MessageFormat.format("\nBANK : {0}\nKETERANGAN : {1}\nNOMINAL : {2}\n---------------------------------------------", mut.getKodebank(), mut.getKeterangan(), mut.getNominal()) ); 
+//                    }
                 }
             }
         }catch(NumberFormatException | SQLException e){
-            System.out.println("[ERROR] " + Log.GetTime() + " : " + e);
+            error = e.getMessage();
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-144 ", e.getMessage());
         }        
         finally {
             CloseDB();
@@ -178,7 +161,7 @@ public class DbAdapter {
                 st.close();
             }
         } catch (SQLException e) {
-            Log.Logger("[ERROR]", e.getMessage());
+            Tool.Logger("[ERROR]" + Connect.class.getName() + " LINE-164 ", e.getMessage());
         }
     }
     

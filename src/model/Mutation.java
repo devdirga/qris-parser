@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package db;
+package model;
 
-import util.Link;
+import util.Tool;
 
 /**
  *
@@ -18,13 +18,13 @@ public class Mutation {
     private String tanggal;
     private String keterangan;
     private String idoutlet;
-    private String dbkr = Link.EMPTY;
+    private String dbkr = Tool.EMPTY;
     private String nominal;
     private String saldo;
     private String tglsys;
     private String waktusys;
     private String catatan1;
-    private String catatan2 = Link.EMPTY;
+    private String catatan2 = Tool.EMPTY;
     
     public Mutation(String keterangan, String kodebank, String nominal, String saldo, String catatan1){
         this.keterangan = keterangan;

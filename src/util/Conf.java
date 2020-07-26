@@ -5,24 +5,23 @@
  */
 package util;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Properties;
-
 /**
  *
  * @author Dirga
  */
-public class ConfigReader {
+public class Conf {
+    
+    /**
+     * Development
+     */
     
     private static final String DBHOST = "localhost";
     private static final String DBPORT = "3306";
     private static final String DBUSER = "root";
     private static final String DBPASS = "admin123";
     private static final String DBNAME = "ibank_bca";
-    private static final String USER = "QRIS-USERNAME";
-    private static final String PASS = "QRIS-PASSWORD";
+    private static final String USER = "user";
+    private static final String PASS = "password";
     private static final long LOOPWAIT = 1;
     
     /**
